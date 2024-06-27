@@ -10,9 +10,9 @@ CREATE TABLE IF NOT EXISTS schedules (
     type_of_group course_level,
     task VARCHAR(35),
     deadline TIMESTAMP,
-    score INT,
-    start_time TIMESTAMP,
-    end_time TIMESTAMP,
+    score DECIMAL,
+    start_time TIME,
+    end_time TIME,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP,
     deleted_at TIMESTAMP

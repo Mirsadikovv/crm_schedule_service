@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"go_schedule_service/config"
-	"go_schedule_service/genproto/teacher_service"
+	"go_schedule_service/genproto/lesson_service"
 
 	"go_schedule_service/grpc/client"
 	"go_schedule_service/grpc/service"
@@ -17,7 +17,7 @@ func SetUpServer(cfg config.Config, log logger.LoggerI, strg storage.StorageI, s
 
 	grpcServer = grpc.NewServer()
 
-	teacher_service.RegisterTeacherServiceServer(grpcServer, service.NewTeacherService(cfg, log, strg, srvc))
+	lesson_service.RegisterLessonServiceServer(grpcServer, service.NewLessonService(cfg, log, strg, srvc))
 
 	reflection.Register(grpcServer)
 	return

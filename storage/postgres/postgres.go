@@ -13,8 +13,11 @@ import (
 )
 
 type Store struct {
-	db      *pgxpool.Pool
-	teacher storage.TeacherRepoI
+	db         *pgxpool.Pool
+	lesson     storage.LessonRepoI
+	journal    storage.JournalRepoI
+	schedule   storage.ScheduleRepoI
+	perfomance storage.PerfomanceRepoI
 }
 
 func NewPostgres(ctx context.Context, cfg config.Config) (storage.StorageI, error) {
@@ -55,9 +58,30 @@ func (l *Store) Log(ctx context.Context, level pgx.LogLevel, msg string, data ma
 	log.Println(args...)
 }
 
-func (s *Store) Teacher() storage.TeacherRepoI {
-	if s.teacher == nil {
-		s.teacher = NewTeacherRepo(s.db)
+func (s *Store) Lesson() storage.LessonRepoI {
+	if s.lesson == nil {
+		s.lesson = NewLessonRepo(s.db)
 	}
-	return s.teacher
+	return s.lesson
+}
+
+func (s *Store) Journal() storage.JournalRepoI {
+	if s.journal == nil {
+		s.journal = NewJournalRepo(s.db)
+	}
+	return s.journal
+}
+
+func (s *Store) Schedule() storage.ScheduleRepoI {
+	if s.schedule == nil {
+		s.schedule = NewScheduleRepo(s.db)
+	}
+	return s.schedule
+}
+
+func (s *Store) Perfomance() storage.PerfomanceRepoI {
+	if s.perfomance == nil {
+		s.perfomance = NewPerfomanceRepo(s.db)
+	}
+	return s.perfomance
 }
