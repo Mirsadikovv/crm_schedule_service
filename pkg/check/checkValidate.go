@@ -22,19 +22,23 @@ func ValidateMail(mail string) error {
 	return nil
 }
 
-func ValidateBitrthday(birthday string, age int) error {
-	layout := "2006-01-02"
+func CheckDeadline(timestamp string) (float64, error) {
+	layout := time.RFC3339
 
-	date, err := time.Parse(layout, birthday)
+	date, err := time.Parse(layout, timestamp)
 	if err != nil {
-		return errors.New("wrong date format")
+		return -1, errors.New("wrong timestamp format")
 	}
-	today := time.Now()
 
-	duration := today.Sub(date)
-	years := int(duration.Hours() / (24 * 365))
-	if years != age {
-		return errors.New("age and birthday not equal")
+	now := time.Now()
+	timeUntilDeadline := date.Sub(now)
+
+	if timeUntilDeadline < 0 {
+		if timeUntilDeadline >= -72*time.Hour {
+			return 1, nil
+		}
+		return 0, nil
 	}
-	return nil
+
+	return timeUntilDeadline.Hours(), nil
 }

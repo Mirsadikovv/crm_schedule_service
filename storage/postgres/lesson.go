@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	tc "go_schedule_service/genproto/lesson_service"
+	ls "go_schedule_service/genproto/lesson_service"
 	"go_schedule_service/pkg"
 	"go_schedule_service/storage"
 	"log"
@@ -25,7 +25,7 @@ func NewLessonRepo(db *pgxpool.Pool) storage.LessonRepoI {
 	}
 }
 
-func (c *lessonRepo) Create(ctx context.Context, req *tc.CreateLesson) (*tc.GetLesson, error) {
+func (c *lessonRepo) Create(ctx context.Context, req *ls.CreateLesson) (*ls.GetLesson, error) {
 
 	id := uuid.NewString()
 
@@ -47,7 +47,7 @@ func (c *lessonRepo) Create(ctx context.Context, req *tc.CreateLesson) (*tc.GetL
 		return nil, err
 	}
 
-	lesson, err := c.GetById(ctx, &tc.LessonPrimaryKey{Id: id})
+	lesson, err := c.GetById(ctx, &ls.LessonPrimaryKey{Id: id})
 	if err != nil {
 		log.Println("error while getting lesson by id")
 		return nil, err
@@ -55,7 +55,7 @@ func (c *lessonRepo) Create(ctx context.Context, req *tc.CreateLesson) (*tc.GetL
 	return lesson, nil
 }
 
-func (c *lessonRepo) Update(ctx context.Context, req *tc.UpdateLesson) (*tc.GetLesson, error) {
+func (c *lessonRepo) Update(ctx context.Context, req *ls.UpdateLesson) (*ls.GetLesson, error) {
 
 	_, err := c.db.Exec(ctx, `
 		UPDATE lessons SET
@@ -74,7 +74,7 @@ func (c *lessonRepo) Update(ctx context.Context, req *tc.UpdateLesson) (*tc.GetL
 		return nil, err
 	}
 
-	lesson, err := c.GetById(ctx, &tc.LessonPrimaryKey{Id: req.Id})
+	lesson, err := c.GetById(ctx, &ls.LessonPrimaryKey{Id: req.Id})
 	if err != nil {
 		log.Println("error while getting lesson by id")
 		return nil, err
@@ -82,8 +82,8 @@ func (c *lessonRepo) Update(ctx context.Context, req *tc.UpdateLesson) (*tc.GetL
 	return lesson, nil
 }
 
-func (c *lessonRepo) GetAll(ctx context.Context, req *tc.GetListLessonRequest) (*tc.GetListLessonResponse, error) {
-	lessons := tc.GetListLessonResponse{}
+func (c *lessonRepo) GetAll(ctx context.Context, req *ls.GetListLessonRequest) (*ls.GetListLessonResponse, error) {
+	lessons := ls.GetListLessonResponse{}
 	var (
 		created_at sql.NullString
 		updated_at sql.NullString
@@ -113,7 +113,7 @@ func (c *lessonRepo) GetAll(ctx context.Context, req *tc.GetListLessonRequest) (
 	defer rows.Close()
 	for rows.Next() {
 		var (
-			lesson tc.GetLesson
+			lesson ls.GetLesson
 		)
 		if err = rows.Scan(
 			&lesson.Id,
@@ -139,9 +139,9 @@ func (c *lessonRepo) GetAll(ctx context.Context, req *tc.GetListLessonRequest) (
 	return &lessons, nil
 }
 
-func (c *lessonRepo) GetById(ctx context.Context, id *tc.LessonPrimaryKey) (*tc.GetLesson, error) {
+func (c *lessonRepo) GetById(ctx context.Context, id *ls.LessonPrimaryKey) (*ls.GetLesson, error) {
 	var (
-		lesson     tc.GetLesson
+		lesson     ls.GetLesson
 		created_at sql.NullString
 		updated_at sql.NullString
 	)
@@ -173,7 +173,7 @@ func (c *lessonRepo) GetById(ctx context.Context, id *tc.LessonPrimaryKey) (*tc.
 	return &lesson, nil
 }
 
-func (c *lessonRepo) Delete(ctx context.Context, id *tc.LessonPrimaryKey) (emptypb.Empty, error) {
+func (c *lessonRepo) Delete(ctx context.Context, id *ls.LessonPrimaryKey) (emptypb.Empty, error) {
 
 	_, err := c.db.Exec(ctx, `
 		UPDATE lessons SET

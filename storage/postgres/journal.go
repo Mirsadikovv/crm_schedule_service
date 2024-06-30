@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	tc "go_schedule_service/genproto/journal_service"
+	jo "go_schedule_service/genproto/journal_service"
 	"go_schedule_service/pkg"
 	"go_schedule_service/storage"
 	"log"
@@ -25,7 +25,7 @@ func NewJournalRepo(db *pgxpool.Pool) storage.JournalRepoI {
 	}
 }
 
-func (c *journalRepo) Create(ctx context.Context, req *tc.CreateJournal) (*tc.GetJournal, error) {
+func (c *journalRepo) Create(ctx context.Context, req *jo.CreateJournal) (*jo.GetJournal, error) {
 
 	id := uuid.NewString()
 
@@ -45,7 +45,7 @@ func (c *journalRepo) Create(ctx context.Context, req *tc.CreateJournal) (*tc.Ge
 		return nil, err
 	}
 
-	journal, err := c.GetById(ctx, &tc.JournalPrimaryKey{Id: id})
+	journal, err := c.GetById(ctx, &jo.JournalPrimaryKey{Id: id})
 	if err != nil {
 		log.Println("error while getting journal by id")
 		return nil, err
@@ -53,7 +53,7 @@ func (c *journalRepo) Create(ctx context.Context, req *tc.CreateJournal) (*tc.Ge
 	return journal, nil
 }
 
-func (c *journalRepo) Update(ctx context.Context, req *tc.UpdateJournal) (*tc.GetJournal, error) {
+func (c *journalRepo) Update(ctx context.Context, req *jo.UpdateJournal) (*jo.GetJournal, error) {
 
 	_, err := c.db.Exec(ctx, `
 		UPDATE journals SET
@@ -70,7 +70,7 @@ func (c *journalRepo) Update(ctx context.Context, req *tc.UpdateJournal) (*tc.Ge
 		return nil, err
 	}
 
-	journal, err := c.GetById(ctx, &tc.JournalPrimaryKey{Id: req.Id})
+	journal, err := c.GetById(ctx, &jo.JournalPrimaryKey{Id: req.Id})
 	if err != nil {
 		log.Println("error while getting journal by id")
 		return nil, err
@@ -78,8 +78,8 @@ func (c *journalRepo) Update(ctx context.Context, req *tc.UpdateJournal) (*tc.Ge
 	return journal, nil
 }
 
-func (c *journalRepo) GetAll(ctx context.Context, req *tc.GetListJournalRequest) (*tc.GetListJournalResponse, error) {
-	journals := tc.GetListJournalResponse{}
+func (c *journalRepo) GetAll(ctx context.Context, req *jo.GetListJournalRequest) (*jo.GetListJournalResponse, error) {
+	journals := jo.GetListJournalResponse{}
 	var (
 		created_at sql.NullString
 		updated_at sql.NullString
@@ -108,7 +108,7 @@ func (c *journalRepo) GetAll(ctx context.Context, req *tc.GetListJournalRequest)
 	defer rows.Close()
 	for rows.Next() {
 		var (
-			journal tc.GetJournal
+			journal jo.GetJournal
 		)
 		if err = rows.Scan(
 			&journal.Id,
@@ -133,9 +133,9 @@ func (c *journalRepo) GetAll(ctx context.Context, req *tc.GetListJournalRequest)
 	return &journals, nil
 }
 
-func (c *journalRepo) GetById(ctx context.Context, id *tc.JournalPrimaryKey) (*tc.GetJournal, error) {
+func (c *journalRepo) GetById(ctx context.Context, id *jo.JournalPrimaryKey) (*jo.GetJournal, error) {
 	var (
-		journal    tc.GetJournal
+		journal    jo.GetJournal
 		created_at sql.NullString
 		updated_at sql.NullString
 	)
@@ -165,7 +165,7 @@ func (c *journalRepo) GetById(ctx context.Context, id *tc.JournalPrimaryKey) (*t
 	return &journal, nil
 }
 
-func (c *journalRepo) Delete(ctx context.Context, id *tc.JournalPrimaryKey) (emptypb.Empty, error) {
+func (c *journalRepo) Delete(ctx context.Context, id *jo.JournalPrimaryKey) (emptypb.Empty, error) {
 
 	_, err := c.db.Exec(ctx, `
 		UPDATE journals SET

@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	tc "go_schedule_service/genproto/schedule_service"
+	sc "go_schedule_service/genproto/schedule_service"
 	"go_schedule_service/pkg"
 	"go_schedule_service/storage"
 	"log"
@@ -25,7 +25,7 @@ func NewScheduleRepo(db *pgxpool.Pool) storage.ScheduleRepoI {
 	}
 }
 
-func (c *scheduleRepo) Create(ctx context.Context, req *tc.CreateSchedule) (*tc.GetSchedule, error) {
+func (c *scheduleRepo) Create(ctx context.Context, req *sc.CreateSchedule) (*sc.GetSchedule, error) {
 
 	id := uuid.NewString()
 
@@ -35,20 +35,18 @@ func (c *scheduleRepo) Create(ctx context.Context, req *tc.CreateSchedule) (*tc.
 			group_id,
 			lesson_id,
 			classroom,
-			group_name,
 			type_of_group,
 			task,
 			deadline,
 			score,
 			start_time,
 			end_time
-		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10
 		)`,
 		id,
 		req.GroupId,
 		req.LessonId,
 		req.Classroom,
-		req.GroupName,
 		req.TypeOfGroup,
 		req.Task,
 		req.Deadline,
@@ -61,7 +59,7 @@ func (c *scheduleRepo) Create(ctx context.Context, req *tc.CreateSchedule) (*tc.
 		return nil, err
 	}
 
-	schedules, err := c.GetById(ctx, &tc.SchedulePrimaryKey{Id: id})
+	schedules, err := c.GetById(ctx, &sc.SchedulePrimaryKey{Id: id})
 	if err != nil {
 		log.Println("error while getting schedules by id")
 		return nil, err
@@ -69,27 +67,25 @@ func (c *scheduleRepo) Create(ctx context.Context, req *tc.CreateSchedule) (*tc.
 	return schedules, nil
 }
 
-func (c *scheduleRepo) Update(ctx context.Context, req *tc.UpdateSchedule) (*tc.GetSchedule, error) {
+func (c *scheduleRepo) Update(ctx context.Context, req *sc.UpdateSchedule) (*sc.GetSchedule, error) {
 
 	_, err := c.db.Exec(ctx, `
 		UPDATE schedules SET
 		group_id = $1,
 		lesson_id = $2,
 		classroom = $3,
-		group_name = $4,
-		type_of_group = $5,
-		task = $6,
-		deadline = $7,
-		score = $8,
-		start_time = $9,
-		end_time = $10,
+		type_of_group = $4,
+		task = $5,
+		deadline = $6,
+		score = $7,
+		start_time = $8,
+		end_time = $9,
 		updated_at = NOW()
-		WHERE id = $11
+		WHERE id = $10
 		`,
 		req.GroupId,
 		req.LessonId,
 		req.Classroom,
-		req.GroupName,
 		req.TypeOfGroup,
 		req.Task,
 		req.Deadline,
@@ -102,7 +98,7 @@ func (c *scheduleRepo) Update(ctx context.Context, req *tc.UpdateSchedule) (*tc.
 		return nil, err
 	}
 
-	schedules, err := c.GetById(ctx, &tc.SchedulePrimaryKey{Id: req.Id})
+	schedules, err := c.GetById(ctx, &sc.SchedulePrimaryKey{Id: req.Id})
 	if err != nil {
 		log.Println("error while getting schedules by id")
 		return nil, err
@@ -110,9 +106,10 @@ func (c *scheduleRepo) Update(ctx context.Context, req *tc.UpdateSchedule) (*tc.
 	return schedules, nil
 }
 
-func (c *scheduleRepo) GetAll(ctx context.Context, req *tc.GetListScheduleRequest) (*tc.GetListScheduleResponse, error) {
-	schedules := tc.GetListScheduleResponse{}
+func (c *scheduleRepo) GetAll(ctx context.Context, req *sc.GetListScheduleRequest) (*sc.GetListScheduleResponse, error) {
+	schedules := sc.GetListScheduleResponse{}
 	var (
+		deadline   sql.NullString
 		start_time sql.NullString
 		end_time   sql.NullString
 		created_at sql.NullString
@@ -128,13 +125,12 @@ func (c *scheduleRepo) GetAll(ctx context.Context, req *tc.GetListScheduleReques
 				group_id,
 				lesson_id,
 				classroom,
-				group_name,
 				type_of_group,
 				task,
 				deadline,
 				score,
 				start_time,
-				end_time
+				end_time,
 				created_at,
 				updated_at
 			FROM schedules
@@ -150,17 +146,16 @@ func (c *scheduleRepo) GetAll(ctx context.Context, req *tc.GetListScheduleReques
 	defer rows.Close()
 	for rows.Next() {
 		var (
-			schedule tc.GetSchedule
+			schedule sc.GetSchedule
 		)
 		if err = rows.Scan(
 			&schedule.Id,
 			&schedule.GroupId,
 			&schedule.LessonId,
 			&schedule.Classroom,
-			&schedule.GroupName,
 			&schedule.TypeOfGroup,
 			&schedule.Task,
-			&schedule.Deadline,
+			&deadline,
 			&schedule.Score,
 			&start_time,
 			&end_time,
@@ -169,6 +164,7 @@ func (c *scheduleRepo) GetAll(ctx context.Context, req *tc.GetListScheduleReques
 		); err != nil {
 			return &schedules, err
 		}
+		schedule.Deadline = pkg.NullStringToString(deadline)
 		schedule.StartTime = pkg.NullStringToString(start_time)
 		schedule.EndTime = pkg.NullStringToString(end_time)
 		schedule.CreatedAt = pkg.NullStringToString(created_at)
@@ -185,9 +181,10 @@ func (c *scheduleRepo) GetAll(ctx context.Context, req *tc.GetListScheduleReques
 	return &schedules, nil
 }
 
-func (c *scheduleRepo) GetById(ctx context.Context, id *tc.SchedulePrimaryKey) (*tc.GetSchedule, error) {
+func (c *scheduleRepo) GetById(ctx context.Context, id *sc.SchedulePrimaryKey) (*sc.GetSchedule, error) {
 	var (
-		schedule   tc.GetSchedule
+		deadline   sql.NullString
+		schedule   sc.GetSchedule
 		start_time sql.NullString
 		end_time   sql.NullString
 		created_at sql.NullString
@@ -199,13 +196,12 @@ func (c *scheduleRepo) GetById(ctx context.Context, id *tc.SchedulePrimaryKey) (
 				group_id,
 				lesson_id,
 				classroom,
-				group_name,
 				type_of_group,
 				task,
 				deadline,
 				score,
 				start_time,
-				end_time
+				end_time,
 				created_at,
 				updated_at
 			FROM schedules
@@ -218,10 +214,9 @@ func (c *scheduleRepo) GetById(ctx context.Context, id *tc.SchedulePrimaryKey) (
 		&schedule.GroupId,
 		&schedule.LessonId,
 		&schedule.Classroom,
-		&schedule.GroupName,
 		&schedule.TypeOfGroup,
 		&schedule.Task,
-		&schedule.Deadline,
+		&deadline,
 		&schedule.Score,
 		&start_time,
 		&end_time,
@@ -229,6 +224,7 @@ func (c *scheduleRepo) GetById(ctx context.Context, id *tc.SchedulePrimaryKey) (
 		&updated_at); err != nil {
 		return &schedule, err
 	}
+	schedule.Deadline = pkg.NullStringToString(deadline)
 	schedule.StartTime = pkg.NullStringToString(start_time)
 	schedule.EndTime = pkg.NullStringToString(end_time)
 	schedule.CreatedAt = pkg.NullStringToString(created_at)
@@ -237,7 +233,7 @@ func (c *scheduleRepo) GetById(ctx context.Context, id *tc.SchedulePrimaryKey) (
 	return &schedule, nil
 }
 
-func (c *scheduleRepo) Delete(ctx context.Context, id *tc.SchedulePrimaryKey) (emptypb.Empty, error) {
+func (c *scheduleRepo) Delete(ctx context.Context, id *sc.SchedulePrimaryKey) (emptypb.Empty, error) {
 
 	_, err := c.db.Exec(ctx, `
 		UPDATE schedules SET

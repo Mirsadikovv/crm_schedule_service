@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS schedules (
     group_id UUID NOT NULL,
     lesson_id UUID NOT NULL,
     classroom VARCHAR(20),
-    group_name VARCHAR(20),
     type_of_group course_level,
     task VARCHAR(35),
     deadline TIMESTAMP,

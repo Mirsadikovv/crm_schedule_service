@@ -28,6 +28,10 @@ type TeacherServiceClient interface {
 	GetList(ctx context.Context, in *GetListTeacherRequest, opts ...grpc.CallOption) (*GetListTeacherResponse, error)
 	Update(ctx context.Context, in *UpdateTeacher, opts ...grpc.CallOption) (*GetTeacher, error)
 	Delete(ctx context.Context, in *TeacherPrimaryKey, opts ...grpc.CallOption) (*empty.Empty, error)
+	Login(ctx context.Context, in *TeacherLoginRequest, opts ...grpc.CallOption) (*TeacherLoginResponse, error)
+	Register(ctx context.Context, in *TeacherRegisterRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	RegisterConfirm(ctx context.Context, in *TeacherRegisterConfRequest, opts ...grpc.CallOption) (*TeacherLoginResponse, error)
+	ChangePassword(ctx context.Context, in *TeacherChangePassword, opts ...grpc.CallOption) (*TeacherChangePasswordResp, error)
 }
 
 type teacherServiceClient struct {
@@ -83,6 +87,42 @@ func (c *teacherServiceClient) Delete(ctx context.Context, in *TeacherPrimaryKey
 	return out, nil
 }
 
+func (c *teacherServiceClient) Login(ctx context.Context, in *TeacherLoginRequest, opts ...grpc.CallOption) (*TeacherLoginResponse, error) {
+	out := new(TeacherLoginResponse)
+	err := c.cc.Invoke(ctx, "/teacher_service_go.TeacherService/Login", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *teacherServiceClient) Register(ctx context.Context, in *TeacherRegisterRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, "/teacher_service_go.TeacherService/Register", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *teacherServiceClient) RegisterConfirm(ctx context.Context, in *TeacherRegisterConfRequest, opts ...grpc.CallOption) (*TeacherLoginResponse, error) {
+	out := new(TeacherLoginResponse)
+	err := c.cc.Invoke(ctx, "/teacher_service_go.TeacherService/RegisterConfirm", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *teacherServiceClient) ChangePassword(ctx context.Context, in *TeacherChangePassword, opts ...grpc.CallOption) (*TeacherChangePasswordResp, error) {
+	out := new(TeacherChangePasswordResp)
+	err := c.cc.Invoke(ctx, "/teacher_service_go.TeacherService/ChangePassword", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TeacherServiceServer is the server API for TeacherService service.
 // All implementations should embed UnimplementedTeacherServiceServer
 // for forward compatibility
@@ -92,6 +132,10 @@ type TeacherServiceServer interface {
 	GetList(context.Context, *GetListTeacherRequest) (*GetListTeacherResponse, error)
 	Update(context.Context, *UpdateTeacher) (*GetTeacher, error)
 	Delete(context.Context, *TeacherPrimaryKey) (*empty.Empty, error)
+	Login(context.Context, *TeacherLoginRequest) (*TeacherLoginResponse, error)
+	Register(context.Context, *TeacherRegisterRequest) (*empty.Empty, error)
+	RegisterConfirm(context.Context, *TeacherRegisterConfRequest) (*TeacherLoginResponse, error)
+	ChangePassword(context.Context, *TeacherChangePassword) (*TeacherChangePasswordResp, error)
 }
 
 // UnimplementedTeacherServiceServer should be embedded to have forward compatible implementations.
@@ -112,6 +156,18 @@ func (UnimplementedTeacherServiceServer) Update(context.Context, *UpdateTeacher)
 }
 func (UnimplementedTeacherServiceServer) Delete(context.Context, *TeacherPrimaryKey) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedTeacherServiceServer) Login(context.Context, *TeacherLoginRequest) (*TeacherLoginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedTeacherServiceServer) Register(context.Context, *TeacherRegisterRequest) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
+}
+func (UnimplementedTeacherServiceServer) RegisterConfirm(context.Context, *TeacherRegisterConfRequest) (*TeacherLoginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterConfirm not implemented")
+}
+func (UnimplementedTeacherServiceServer) ChangePassword(context.Context, *TeacherChangePassword) (*TeacherChangePasswordResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChangePassword not implemented")
 }
 
 // UnsafeTeacherServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -215,6 +271,78 @@ func _TeacherService_Delete_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TeacherService_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TeacherLoginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeacherServiceServer).Login(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/teacher_service_go.TeacherService/Login",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeacherServiceServer).Login(ctx, req.(*TeacherLoginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TeacherService_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TeacherRegisterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeacherServiceServer).Register(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/teacher_service_go.TeacherService/Register",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeacherServiceServer).Register(ctx, req.(*TeacherRegisterRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TeacherService_RegisterConfirm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TeacherRegisterConfRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeacherServiceServer).RegisterConfirm(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/teacher_service_go.TeacherService/RegisterConfirm",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeacherServiceServer).RegisterConfirm(ctx, req.(*TeacherRegisterConfRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TeacherService_ChangePassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TeacherChangePassword)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TeacherServiceServer).ChangePassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/teacher_service_go.TeacherService/ChangePassword",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TeacherServiceServer).ChangePassword(ctx, req.(*TeacherChangePassword))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TeacherService_ServiceDesc is the grpc.ServiceDesc for TeacherService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -241,6 +369,22 @@ var TeacherService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Delete",
 			Handler:    _TeacherService_Delete_Handler,
+		},
+		{
+			MethodName: "Login",
+			Handler:    _TeacherService_Login_Handler,
+		},
+		{
+			MethodName: "Register",
+			Handler:    _TeacherService_Register_Handler,
+		},
+		{
+			MethodName: "RegisterConfirm",
+			Handler:    _TeacherService_RegisterConfirm_Handler,
+		},
+		{
+			MethodName: "ChangePassword",
+			Handler:    _TeacherService_ChangePassword_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -16,10 +16,10 @@ type LessonService struct {
 	cfg      config.Config
 	log      logger.LoggerI
 	strg     storage.StorageI
-	services client.ServiceManagerI
+	services client.GrpcClientI
 }
 
-func NewLessonService(cfg config.Config, log logger.LoggerI, strg storage.StorageI, srvs client.ServiceManagerI) *LessonService {
+func NewLessonService(cfg config.Config, log logger.LoggerI, strg storage.StorageI, srvs client.GrpcClientI) *LessonService {
 	return &LessonService{
 		cfg:      cfg,
 		log:      log,

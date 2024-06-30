@@ -16,10 +16,10 @@ type JournalService struct {
 	cfg      config.Config
 	log      logger.LoggerI
 	strg     storage.StorageI
-	services client.ServiceManagerI
+	services client.GrpcClientI
 }
 
-func NewJournalService(cfg config.Config, log logger.LoggerI, strg storage.StorageI, srvs client.ServiceManagerI) *JournalService {
+func NewJournalService(cfg config.Config, log logger.LoggerI, strg storage.StorageI, srvs client.GrpcClientI) *JournalService {
 	return &JournalService{
 		cfg:      cfg,
 		log:      log,

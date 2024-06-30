@@ -4,8 +4,8 @@ import (
 	"context"
 	"go_schedule_service/genproto/journal_service"
 	"go_schedule_service/genproto/lesson_service"
+	"go_schedule_service/genproto/perfomance_service"
 	"go_schedule_service/genproto/schedule_service"
-	"go_schedule_service/genproto/student_perfomance_service"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -43,9 +43,9 @@ type ScheduleRepoI interface {
 }
 
 type PerfomanceRepoI interface {
-	Create(context.Context, *student_perfomance_service.CreateStudentPerfomance) (*student_perfomance_service.GetStudentPerfomance, error)
-	Update(context.Context, *student_perfomance_service.UpdateStudentPerfomance) (*student_perfomance_service.GetStudentPerfomance, error)
-	GetAll(context.Context, *student_perfomance_service.GetListStudentPerfomanceRequest) (*student_perfomance_service.GetListStudentPerfomanceResponse, error)
-	GetById(context.Context, *student_perfomance_service.StudentPerfomancePrimaryKey) (*student_perfomance_service.GetStudentPerfomance, error)
-	Delete(context.Context, *student_perfomance_service.StudentPerfomancePrimaryKey) (emptypb.Empty, error)
+	Create(context.Context, *perfomance_service.CreatePerfomance) (*perfomance_service.GetPerfomance, error)
+	Update(context.Context, *perfomance_service.UpdatePerfomance) (*perfomance_service.GetPerfomance, error)
+	GetAll(context.Context, *perfomance_service.GetListPerfomanceRequest) (*perfomance_service.GetListPerfomanceResponse, error)
+	GetById(context.Context, *perfomance_service.PerfomancePrimaryKey) (*perfomance_service.GetPerfomance, error)
+	Delete(context.Context, *perfomance_service.PerfomancePrimaryKey) (emptypb.Empty, error)
 }

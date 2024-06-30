@@ -34,7 +34,7 @@ func main() {
 	}
 	defer pgStore.CloseDB()
 
-	svcs, err := client.NewGrpcClients(cfg)
+	svcs, err := client.New(cfg)
 	if err != nil {
 		log.Panic("client.NewGrpcClients", logger.Error(err))
 	}
