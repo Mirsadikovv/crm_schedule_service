@@ -135,9 +135,10 @@ func (c *journalRepo) GetAll(ctx context.Context, req *jo.GetListJournalRequest)
 
 func (c *journalRepo) GetById(ctx context.Context, id *jo.JournalPrimaryKey) (*jo.GetJournal, error) {
 	var (
-		journal    jo.GetJournal
-		created_at sql.NullString
-		updated_at sql.NullString
+		journal     jo.GetJournal
+		created_at  sql.NullString
+		updated_at  sql.NullString
+		date_lesson sql.NullString
 	)
 
 	query := `SELECT
@@ -154,11 +155,12 @@ func (c *journalRepo) GetById(ctx context.Context, id *jo.JournalPrimaryKey) (*j
 	if err := rows.Scan(
 		&journal.Id,
 		&journal.ScheduleId,
-		&journal.DateOfLesson,
+		&date_lesson,
 		&created_at,
 		&updated_at); err != nil {
 		return &journal, err
 	}
+	journal.DateOfLesson = pkg.NullStringToString(date_lesson)
 	journal.CreatedAt = pkg.NullStringToString(created_at)
 	journal.UpdatedAt = pkg.NullStringToString(updated_at)
 

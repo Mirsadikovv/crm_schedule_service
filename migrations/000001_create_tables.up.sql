@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS schedules (
     type_of_group course_level,
     task VARCHAR(35),
     deadline TIMESTAMP,
-    score DECIMAL,
+    score NUMERIC,
     start_time TIME,
     end_time TIME,
     created_at TIMESTAMP DEFAULT NOW(),
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS student_performance (
     student_id UUID NOT NULL,
     schedule_id UUID NOT NULL,
     attended BOOLEAN NOT NULL,
-    task_score DECIMAL,
+    task_score NUMERIC,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP,
     deleted_at TIMESTAMP

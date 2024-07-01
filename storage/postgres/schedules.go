@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	sc "go_schedule_service/genproto/schedule_service"
+	"go_schedule_service/genproto/group_service"
+	sched "go_schedule_service/genproto/schedule_service"
+	"go_schedule_service/grpc/client"
 	"go_schedule_service/pkg"
 	"go_schedule_service/storage"
 	"log"
@@ -16,16 +18,18 @@ import (
 )
 
 type scheduleRepo struct {
-	db *pgxpool.Pool
+	db       *pgxpool.Pool
+	services client.GrpcClientI
 }
 
-func NewScheduleRepo(db *pgxpool.Pool) storage.ScheduleRepoI {
+func NewScheduleRepo(db *pgxpool.Pool, srvs client.GrpcClientI) storage.ScheduleRepoI {
 	return &scheduleRepo{
-		db: db,
+		db:       db,
+		services: srvs,
 	}
 }
 
-func (c *scheduleRepo) Create(ctx context.Context, req *sc.CreateSchedule) (*sc.GetSchedule, error) {
+func (c *scheduleRepo) Create(ctx context.Context, req *sched.CreateSchedule) (*sched.GetSchedule, error) {
 
 	id := uuid.NewString()
 
@@ -59,7 +63,7 @@ func (c *scheduleRepo) Create(ctx context.Context, req *sc.CreateSchedule) (*sc.
 		return nil, err
 	}
 
-	schedules, err := c.GetById(ctx, &sc.SchedulePrimaryKey{Id: id})
+	schedules, err := c.GetById(ctx, &sched.SchedulePrimaryKey{Id: id})
 	if err != nil {
 		log.Println("error while getting schedules by id")
 		return nil, err
@@ -67,7 +71,7 @@ func (c *scheduleRepo) Create(ctx context.Context, req *sc.CreateSchedule) (*sc.
 	return schedules, nil
 }
 
-func (c *scheduleRepo) Update(ctx context.Context, req *sc.UpdateSchedule) (*sc.GetSchedule, error) {
+func (c *scheduleRepo) Update(ctx context.Context, req *sched.UpdateSchedule) (*sched.GetSchedule, error) {
 
 	_, err := c.db.Exec(ctx, `
 		UPDATE schedules SET
@@ -98,7 +102,7 @@ func (c *scheduleRepo) Update(ctx context.Context, req *sc.UpdateSchedule) (*sc.
 		return nil, err
 	}
 
-	schedules, err := c.GetById(ctx, &sc.SchedulePrimaryKey{Id: req.Id})
+	schedules, err := c.GetById(ctx, &sched.SchedulePrimaryKey{Id: req.Id})
 	if err != nil {
 		log.Println("error while getting schedules by id")
 		return nil, err
@@ -106,8 +110,8 @@ func (c *scheduleRepo) Update(ctx context.Context, req *sc.UpdateSchedule) (*sc.
 	return schedules, nil
 }
 
-func (c *scheduleRepo) GetAll(ctx context.Context, req *sc.GetListScheduleRequest) (*sc.GetListScheduleResponse, error) {
-	schedules := sc.GetListScheduleResponse{}
+func (c *scheduleRepo) GetAll(ctx context.Context, req *sched.GetListScheduleRequest) (*sched.GetListScheduleResponse, error) {
+	schedules := sched.GetListScheduleResponse{}
 	var (
 		deadline   sql.NullString
 		start_time sql.NullString
@@ -118,7 +122,7 @@ func (c *scheduleRepo) GetAll(ctx context.Context, req *sc.GetListScheduleReques
 	filter_by_name := ""
 	offset := (req.Offset - 1) * req.Limit
 	if req.Search != "" {
-		filter_by_name = fmt.Sprintf(`AND theme ILIKE '%%%v%%'`, req.Search)
+		filter_by_name = fmt.Sprintf(`AND classroom ILIKE '%%%v%%'`, req.Search)
 	}
 	query := `SELECT
 				id,
@@ -146,7 +150,7 @@ func (c *scheduleRepo) GetAll(ctx context.Context, req *sc.GetListScheduleReques
 	defer rows.Close()
 	for rows.Next() {
 		var (
-			schedule sc.GetSchedule
+			schedule sched.GetSchedule
 		)
 		if err = rows.Scan(
 			&schedule.Id,
@@ -181,10 +185,10 @@ func (c *scheduleRepo) GetAll(ctx context.Context, req *sc.GetListScheduleReques
 	return &schedules, nil
 }
 
-func (c *scheduleRepo) GetById(ctx context.Context, id *sc.SchedulePrimaryKey) (*sc.GetSchedule, error) {
+func (c *scheduleRepo) GetById(ctx context.Context, id *sched.SchedulePrimaryKey) (*sched.GetSchedule, error) {
 	var (
 		deadline   sql.NullString
-		schedule   sc.GetSchedule
+		schedule   sched.GetSchedule
 		start_time sql.NullString
 		end_time   sql.NullString
 		created_at sql.NullString
@@ -233,7 +237,7 @@ func (c *scheduleRepo) GetById(ctx context.Context, id *sc.SchedulePrimaryKey) (
 	return &schedule, nil
 }
 
-func (c *scheduleRepo) Delete(ctx context.Context, id *sc.SchedulePrimaryKey) (emptypb.Empty, error) {
+func (c *scheduleRepo) Delete(ctx context.Context, id *sched.SchedulePrimaryKey) (emptypb.Empty, error) {
 
 	_, err := c.db.Exec(ctx, `
 		UPDATE schedules SET
@@ -246,4 +250,165 @@ func (c *scheduleRepo) Delete(ctx context.Context, id *sc.SchedulePrimaryKey) (e
 		return emptypb.Empty{}, err
 	}
 	return emptypb.Empty{}, nil
+}
+
+func (c *scheduleRepo) GetStudentSchedule(ctx context.Context, id *sched.SchedulePrimaryKey) (*sched.GetStudentSchedules, error) {
+	var (
+		deadline   sql.NullString
+		schedule   sched.GetStudentSchedules
+		start_time sql.NullString
+		end_time   sql.NullString
+	)
+
+	query := `SELECT
+				sc.classroom,
+				sc.type_of_group,
+				sc.task,
+				sc.deadline,
+				sc.score,
+				sc.start_time,
+				sc.end_time,
+				sp.attended,
+				sp.task_score
+			FROM student_performance sp 
+			JOIN schedules sc ON sp.schedule_id = sc.id 
+			WHERE TRUE AND sc.deleted_at is null 
+`
+	rows := c.db.QueryRow(ctx, query)
+
+	if err := rows.Scan(
+		&schedule.Classroom,
+		&schedule.TypeOfGroup,
+		&schedule.Task,
+		&deadline,
+		&schedule.Score,
+		&start_time,
+		&end_time,
+		&schedule.Attended,
+		&schedule.TaskScore); err != nil {
+		return &schedule, err
+	}
+	schedule.Deadline = pkg.NullStringToString(deadline)
+	schedule.StartTime = pkg.NullStringToString(start_time)
+	schedule.EndTime = pkg.NullStringToString(end_time)
+
+	return &schedule, nil
+}
+
+func (c *scheduleRepo) GetTeacherSchedule(ctx context.Context, id *sched.SchedulePrimaryKey) (*sched.GetStudentSchedules, error) {
+	var (
+		deadline   sql.NullString
+		schedule   sched.GetStudentSchedules
+		start_time sql.NullString
+		end_time   sql.NullString
+	)
+
+	query := `SELECT
+				sc.classroom,
+				sc.type_of_group,
+				sc.task,
+				sc.deadline,
+				sc.score,
+				sc.start_time,
+				sc.end_time,
+				sp.attended,
+				sp.task_score
+			FROM student_performance sp 
+			JOIN schedules sc ON sp.schedule_id = sc.id 
+			WHERE TRUE AND sc.deleted_at is null 
+`
+	rows := c.db.QueryRow(ctx, query)
+
+	if err := rows.Scan(
+		&schedule.Classroom,
+		&schedule.TypeOfGroup,
+		&schedule.Task,
+		&deadline,
+		&schedule.Score,
+		&start_time,
+		&end_time,
+		&schedule.Attended,
+		&schedule.TaskScore); err != nil {
+		return &schedule, err
+	}
+	schedule.Deadline = pkg.NullStringToString(deadline)
+	schedule.StartTime = pkg.NullStringToString(start_time)
+	schedule.EndTime = pkg.NullStringToString(end_time)
+
+	return &schedule, nil
+}
+
+func (c *scheduleRepo) GetForWeek(ctx context.Context, req *sched.GetWeekScheduleRequest) (*sched.GetWeekScheduleResponse, error) {
+	schedules := sched.GetWeekScheduleResponse{}
+	var (
+		start_time sql.NullString
+		end_time   sql.NullString
+	)
+
+	filter_by_date := ""
+
+	if req.FromDate != "" {
+		filter_by_date = fmt.Sprintln(` AND jo.date_of_lesson BETWEEN '`, req.FromDate, `' AND '`, req.ToDate, `'`)
+	}
+	query := `SELECT
+				sc.group_id,
+				sc.type_of_group,
+				sc.classroom,
+				sc.start_time,
+				sc.end_time
+			FROM schedules sc 
+			JOIN journals jo ON jo.schedule_id = sc.id
+			WHERE TRUE AND sc.deleted_at is null ` + filter_by_date + ``
+
+	rows, err := c.db.Query(ctx, query)
+
+	if err != nil {
+		log.Println("error while getting all schedules")
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var (
+			schedule sched.GetScheduleWeek
+		)
+
+		if err = rows.Scan(
+			&schedule.GroupId,
+			&schedule.TypeOfGroup,
+			&schedule.Classroom,
+			&start_time,
+			&end_time,
+		); err != nil {
+			return &schedules, err
+		}
+		id := &group_service.GroupPrimaryKey{Id: schedule.GroupId}
+		resp, err := c.services.Group().GetTBS(ctx, id)
+		if err != nil {
+			log.Println("error while gettinf groupinfo", err)
+			return nil, err
+		}
+		schedule.GroupName = resp.GroupName
+		schedule.BranchName = resp.BranchName
+		schedule.TeacherName = resp.TeacherName
+		schedule.SupportTeacherName = resp.SupportTeacherName
+		schedule.StudentsCount = resp.StudentCount
+		schedule.StartTime = pkg.NullStringToString(start_time)
+		schedule.EndTime = pkg.NullStringToString(end_time)
+
+		if err := rows.Scan(
+			&start_time); err != nil {
+			return nil, err
+		}
+
+		schedules.Schedules = append(schedules.Schedules, &schedule)
+	}
+
+	err = c.db.QueryRow(ctx, `  SELECT count(*) FROM schedules sc 
+								JOIN journals jo ON jo.schedule_id = sc.id
+								WHERE TRUE AND sc.deleted_at is null  `+filter_by_date+``).Scan(&schedules.Count)
+	if err != nil {
+		return &schedules, err
+	}
+
+	return &schedules, nil
 }

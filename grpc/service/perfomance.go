@@ -4,6 +4,7 @@ import (
 	"context"
 	"go_schedule_service/config"
 	"go_schedule_service/genproto/perfomance_service"
+	"go_schedule_service/genproto/student_service"
 
 	"go_schedule_service/grpc/client"
 	"go_schedule_service/storage"
@@ -31,11 +32,11 @@ func NewPerfomanceService(cfg config.Config, log logger.LoggerI, strg storage.St
 func (f *PerfomanceService) Create(ctx context.Context, req *perfomance_service.CreatePerfomance) (*perfomance_service.GetPerfomance, error) {
 	f.log.Info("---CreatePerfomance--->>>", logger.Any("req", req))
 
-	// _, err := f.services.Student().Check(ctx, &student_service.StudentPrimaryKey{Id: req.StudentId})
-	// if err != nil {
-	// 	f.log.Error("error while check student")
-	// 	return nil, err
-	// }
+	_, err := f.services.Student().Check(ctx, &student_service.StudentPrimaryKey{Id: req.StudentId})
+	if err != nil {
+		f.log.Error("error while check student")
+		return nil, err
+	}
 	resp, err := f.strg.Perfomance().Create(ctx, req)
 	if err != nil {
 		f.log.Error("---CreatePerfomance--->>>", logger.Error(err))

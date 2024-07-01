@@ -94,3 +94,27 @@ func (f *ScheduleService) Delete(ctx context.Context, req *schedule_service.Sche
 
 	return &emptypb.Empty{}, nil
 }
+
+func (f *ScheduleService) GetStudentSchedule(ctx context.Context, id *schedule_service.SchedulePrimaryKey) (*schedule_service.GetStudentSchedules, error) {
+	f.log.Info("---GetStudentSchedule--->>>", logger.Any("req", id))
+
+	resp, err := f.strg.Schedule().GetStudentSchedule(ctx, id)
+	if err != nil {
+		f.log.Error("---GetStudentSchedule--->>>", logger.Error(err))
+		return &schedule_service.GetStudentSchedules{}, err
+	}
+
+	return resp, nil
+}
+
+func (f *ScheduleService) GetForWeek(ctx context.Context, req *schedule_service.GetWeekScheduleRequest) (*schedule_service.GetWeekScheduleResponse, error) {
+	f.log.Info("---GetWeekSchedule--->>>", logger.Any("req", req))
+
+	resp, err := f.strg.Schedule().GetForWeek(ctx, req)
+	if err != nil {
+		f.log.Error("---GetWeekSchedule--->>>", logger.Error(err))
+		return nil, err
+	}
+
+	return resp, nil
+}

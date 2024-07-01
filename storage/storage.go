@@ -40,6 +40,8 @@ type ScheduleRepoI interface {
 	GetAll(context.Context, *schedule_service.GetListScheduleRequest) (*schedule_service.GetListScheduleResponse, error)
 	GetById(context.Context, *schedule_service.SchedulePrimaryKey) (*schedule_service.GetSchedule, error)
 	Delete(context.Context, *schedule_service.SchedulePrimaryKey) (emptypb.Empty, error)
+	GetStudentSchedule(context.Context, *schedule_service.SchedulePrimaryKey) (*schedule_service.GetStudentSchedules, error)
+	GetForWeek(context.Context, *schedule_service.GetWeekScheduleRequest) (*schedule_service.GetWeekScheduleResponse, error)
 }
 
 type PerfomanceRepoI interface {

@@ -54,9 +54,9 @@ func (g *GrpcClient) Group() gr.GroupServiceClient {
 }
 
 func (g *GrpcClient) Student() st.StudentServiceClient {
-	client, ok := g.connections["group_service"].(st.StudentServiceClient)
+	client, ok := g.connections["student_service"].(st.StudentServiceClient)
 	if !ok {
-		log.Println("failed to assert type for group_service")
+		log.Println("failed to assert type for student_service")
 		return nil
 	}
 	return client

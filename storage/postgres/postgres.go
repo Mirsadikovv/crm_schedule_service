@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"go_schedule_service/config"
+	"go_schedule_service/grpc/client"
 	"go_schedule_service/storage"
 
 	"log"
@@ -18,6 +19,7 @@ type Store struct {
 	journal    storage.JournalRepoI
 	schedule   storage.ScheduleRepoI
 	perfomance storage.PerfomanceRepoI
+	srvc       client.GrpcClientI
 }
 
 func NewPostgres(ctx context.Context, cfg config.Config) (storage.StorageI, error) {
@@ -74,7 +76,7 @@ func (s *Store) Journal() storage.JournalRepoI {
 
 func (s *Store) Schedule() storage.ScheduleRepoI {
 	if s.schedule == nil {
-		s.schedule = NewScheduleRepo(s.db)
+		s.schedule = NewScheduleRepo(s.db, s.srvc)
 	}
 	return s.schedule
 }
